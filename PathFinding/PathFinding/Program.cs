@@ -19,6 +19,7 @@ namespace PathFinding
 {
     class Program
     {
+
         static void Main(string[] args)
         {
 
@@ -29,45 +30,19 @@ namespace PathFinding
 
             queuePoints.Enqueue(initialPoint);
 
-            bool pointFounded = false;
-
             int[][] positionsCoordinates = new int[][] {
-                new int[] { 0,-1 },
-                new int[] { 1,0 },
-                new int[] { 0,1 },
-                new int[] { -1,0 }
+                new int[] { 0 ,-1 },
+                new int[] { 1 , 0 },
+                new int[] { 0 , 1 },
+                new int[] { -1, 0 }
             };
 
-            while (!queuePoints.IsEmpty() && pointFounded == false)
-            {
-                int[] selectedPoint = queuePoints.Dequeue();
+            int[] finalPoint = FindFinalPoint(queuePoints, positionsCoordinates, board);
 
-                foreach (int[] positionCoord in positionsCoordinates)
-                {
-                    int[] summedCoordinate = new int[2] { selectedPoint[0] + positionCoord[0],
-                                                          selectedPoint[1] + positionCoord[1] };
+            Queue queueWayToPointA = new Queue(board.GetLength(0) * board.GetLength(0));
 
-                    if (summedCoordinate[0] >= 0
-                        && summedCoordinate[0] < board.GetLength(0)
-                        && summedCoordinate[1] >= 0
-                        && summedCoordinate[1] < board.GetLength(0))
-                    {
+            queueWayToPointA.Enqueue(finalPoint);
 
-                        switch (board[summedCoordinate[0]][summedCoordinate[1]])
-                        {
-                            case 0:
-                                board[summedCoordinate[0]][summedCoordinate[1]] = board[selectedPoint[0]][selectedPoint[1]] == -2
-                                    ? 1 : board[selectedPoint[0]][selectedPoint[1]] + 1;
-
-                                queuePoints.Enqueue(summedCoordinate);
-                                break;
-                            case -3:
-                                pointFounded = true;
-                                break;
-                        }
-                    }
-                }
-            }
 
             string oie = "";
 
@@ -83,6 +58,10 @@ namespace PathFinding
             }
 
             Console.WriteLine(oie);
+
+            Console.WriteLine(finalPoint[0] != -1
+                                ? WayToFinalPoint(queueWayToPointA, positionsCoordinates, board)
+                                : "Não há caminhos do ponto A ao ponto B");
         }
 
         private static int[][] ReadBoardArchive()
@@ -114,11 +93,115 @@ namespace PathFinding
             throw new Exception("Não há ponto inicial.");
         }
 
-        private static void FindFinalPoint()
+        private static int[] FindFinalPoint(Queue queuePoints, int[][] positionsCoordinates, int[][] board)
+        {
+            while (!queuePoints.IsEmpty()) // if
+            {
+                int[] selectedPoint = queuePoints.Dequeue();
+
+                foreach (int[] positionCoord in positionsCoordinates)
+                {
+                    int[] summedCoordinate = new int[2] { selectedPoint[0] + positionCoord[0],
+                                                          selectedPoint[1] + positionCoord[1] };
+
+                    if (summedCoordinate[0] >= 0
+                        && summedCoordinate[0] < board.GetLength(0)
+                        && summedCoordinate[1] >= 0
+                        && summedCoordinate[1] < board.GetLength(0))
+                    {
+
+                        switch (board[summedCoordinate[0]][summedCoordinate[1]])
+                        {
+                            case 0:
+                                board[summedCoordinate[0]][summedCoordinate[1]] = board[selectedPoint[0]][selectedPoint[1]] == -2
+                                    ? 1 : board[selectedPoint[0]][selectedPoint[1]] + 1;
+
+                                queuePoints.Enqueue(summedCoordinate);
+                                break;
+                            case -3:
+                                return new int[] { summedCoordinate[0], summedCoordinate[1] };
+                        }
+                    }
+                }
+                return FindFinalPoint(queuePoints, positionsCoordinates, board);
+            }
+            return new int[] { -1, -1 };
+        }
+
+        private static string WayToFinalPoint(Queue queueWay, int[][] positionsCoordinates, int[][] board)
         {
 
+            string wayToPointA = "";
+
+            bool isFindingA = true;
+
+            while (isFindingA)
+            {
+                int[] selectedPoint = queueWay.Dequeue();
+
+                int lessValueArountThePoint = 0;
+                int directionToA = 0;
+
+                for (int i = 0; i < 4; i++)
+                {
+                    int[] summedCoordinate = new int[2] { selectedPoint[0] + positionsCoordinates[i][0],
+                                                          selectedPoint[1] + positionsCoordinates[i][1] };
+
+                    if (summedCoordinate[0] >= 0
+                        && summedCoordinate[0] < board.GetLength(0)
+                        && summedCoordinate[1] >= 0
+                        && summedCoordinate[1] < board.GetLength(0))
+                    {
+                        if (board[summedCoordinate[0]][summedCoordinate[1]] == -2)
+                            isFindingA = false;
+
+                        if ((board[summedCoordinate[0]][summedCoordinate[1]] < lessValueArountThePoint || lessValueArountThePoint == 0) 
+                            && board[summedCoordinate[0]][summedCoordinate[1]] > 0 || board[summedCoordinate[0]][summedCoordinate[1]] == -2)
+                        {
+                            lessValueArountThePoint = board[summedCoordinate[0]][summedCoordinate[1]];
+                            directionToA = i;
+                        }
+                    }
+                }
+
+                switch (directionToA)
+                {
+                    case 0:
+                        wayToPointA += "Direita ";
+                        break;
+
+                    case 1:
+                        wayToPointA += "Cima ";
+                        break;
+
+                    case 2:
+                        wayToPointA += "Esquerda ";
+                        break;
+
+                    case 3:
+                        wayToPointA += "Baixo ";
+                        break;
+                }
 
 
+
+                queueWay.Enqueue(new int[2] { selectedPoint[0] + positionsCoordinates[directionToA][0],
+                                              selectedPoint[1] + positionsCoordinates[directionToA][1] });
+
+
+            }
+
+            string[] directionArray = wayToPointA.Split(' ');
+
+            string revertedWayToPointA = "";
+
+            for (int i = directionArray.Length - 1; i >= 0; i--)
+            {
+                revertedWayToPointA += directionArray[i] + "\n";
+
+            }
+
+            return revertedWayToPointA;
         }
     }
 }
