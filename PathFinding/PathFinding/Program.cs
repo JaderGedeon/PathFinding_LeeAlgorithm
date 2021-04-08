@@ -14,6 +14,7 @@ ou prejudicar outros.
 */
 
 using System;
+using System.Collections.Generic;
 
 namespace PathFinding
 {
@@ -24,11 +25,14 @@ namespace PathFinding
         {
 
             int[][] board = ReadBoardArchive();
-            int[] initialPoint = FindInitialPoint(board);
-
             Queue queuePoints = new Queue(board.GetLength(0) * board.GetLength(0));
+            Queue queueWayToPointA = new Queue(board.GetLength(0) * board.GetLength(0));
+            List<int[]> wayCoordinates = new List<int[]>();
 
+            int[] initialPoint = FindInitialPoint(board);
             queuePoints.Enqueue(initialPoint);
+
+            PrintBoard(board, wayCoordinates);
 
             int[][] positionsCoordinates = new int[][] {
                 new int[] { 0 ,-1 },
@@ -38,30 +42,13 @@ namespace PathFinding
             };
 
             int[] finalPoint = FindFinalPoint(queuePoints, positionsCoordinates, board);
-
-            Queue queueWayToPointA = new Queue(board.GetLength(0) * board.GetLength(0));
-
             queueWayToPointA.Enqueue(finalPoint);
 
-
-            string oie = "";
-
-            for (int i = 0; i < board.GetLength(0); i++)
-            {
-
-                oie += "\n ";
-
-                for (int j = 0; j < board.GetLength(0); j++)
-                {
-                    oie += "[" + board[i][j] + "] ";
-                }
-            }
-
-            Console.WriteLine(oie);
-
             Console.WriteLine(finalPoint[0] != -1
-                                ? WayToFinalPoint(queueWayToPointA, positionsCoordinates, board)
+                                ? WayToFinalPoint(queueWayToPointA, positionsCoordinates, board, wayCoordinates)
                                 : "Não há caminhos do ponto A ao ponto B");
+
+            PrintBoard(board, wayCoordinates);
         }
 
         private static int[][] ReadBoardArchive()
@@ -95,7 +82,7 @@ namespace PathFinding
 
         private static int[] FindFinalPoint(Queue queuePoints, int[][] positionsCoordinates, int[][] board)
         {
-            while (!queuePoints.IsEmpty()) // if
+            if (!queuePoints.IsEmpty())
             {
                 int[] selectedPoint = queuePoints.Dequeue();
 
@@ -128,9 +115,8 @@ namespace PathFinding
             return new int[] { -1, -1 };
         }
 
-        private static string WayToFinalPoint(Queue queueWay, int[][] positionsCoordinates, int[][] board)
+        private static string WayToFinalPoint(Queue queueWay, int[][] positionsCoordinates, int[][] board, List<int[]> wayCoordinates)
         {
-
             string wayToPointA = "";
 
             bool isFindingA = true;
@@ -155,7 +141,7 @@ namespace PathFinding
                         if (board[summedCoordinate[0]][summedCoordinate[1]] == -2)
                             isFindingA = false;
 
-                        if ((board[summedCoordinate[0]][summedCoordinate[1]] < lessValueArountThePoint || lessValueArountThePoint == 0) 
+                        if ((board[summedCoordinate[0]][summedCoordinate[1]] < lessValueArountThePoint || lessValueArountThePoint == 0)
                             && board[summedCoordinate[0]][summedCoordinate[1]] > 0 || board[summedCoordinate[0]][summedCoordinate[1]] == -2)
                         {
                             lessValueArountThePoint = board[summedCoordinate[0]][summedCoordinate[1]];
@@ -167,27 +153,27 @@ namespace PathFinding
                 switch (directionToA)
                 {
                     case 0:
-                        wayToPointA += "Direita ";
+                        wayToPointA += "Direita > ";
                         break;
 
                     case 1:
-                        wayToPointA += "Cima ";
+                        wayToPointA += "Cima > ";
                         break;
 
                     case 2:
-                        wayToPointA += "Esquerda ";
+                        wayToPointA += "Esquerda > ";
                         break;
 
                     case 3:
-                        wayToPointA += "Baixo ";
+                        wayToPointA += "Baixo > ";
                         break;
                 }
 
+                int[] coordinate = new int[2] { selectedPoint[0] + positionsCoordinates[directionToA][0],
+                                              selectedPoint[1] + positionsCoordinates[directionToA][1] };
 
-
-                queueWay.Enqueue(new int[2] { selectedPoint[0] + positionsCoordinates[directionToA][0],
-                                              selectedPoint[1] + positionsCoordinates[directionToA][1] });
-
+                wayCoordinates.Add(coordinate);
+                queueWay.Enqueue(coordinate);
 
             }
 
@@ -197,11 +183,57 @@ namespace PathFinding
 
             for (int i = directionArray.Length - 1; i >= 0; i--)
             {
-                revertedWayToPointA += directionArray[i] + "\n";
+                revertedWayToPointA += directionArray[i] + " ";
 
             }
 
-            return revertedWayToPointA;
+            return revertedWayToPointA.Remove(0,3);
+        }
+
+        private static void PrintBoard(int[][] board, List<int[]> wayCoordinates) {
+
+            for (int i = 0; i < board.GetLength(0); i++)
+            {
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.Write(" \n");
+                for (int j = 0; j < board.GetLength(0); j++)
+                {
+                    int value = board[i][j];
+                    var stringAux = "";
+
+                    switch (value)
+                    {
+                        case -1:
+                            Console.ForegroundColor = ConsoleColor.Gray;
+                            Console.BackgroundColor = ConsoleColor.DarkGray;
+                            break;
+                        case -2:
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            break;
+                        case -3:
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            break;
+                        case int valueTested when valueTested >= 0 && valueTested <= 9:
+                            stringAux = " ";
+                            break;
+                        default:
+                            break;
+                    }
+
+                    for (int k = 0; k < wayCoordinates.Count - 1; k++)
+                    {
+                        if (wayCoordinates[k][0] == i && wayCoordinates[k][1] == j) {
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            break;
+                        }
+                    }
+
+                    Console.Write("[" + stringAux + value + "] ");
+                    Console.ResetColor();
+
+                }
+            }
+            Console.Write(" \n\n");
         }
     }
 }
