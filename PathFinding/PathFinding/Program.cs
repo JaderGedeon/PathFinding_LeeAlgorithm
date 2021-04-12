@@ -20,20 +20,21 @@ namespace PathFinding
 {
     class Program
     {
-
         static void Main(string[] args)
         {
-
+            // Definição das variáveis iniciais 
             int[][] board = ReadBoardArchive();
             Queue queuePoints = new Queue(board.GetLength(0) * board.GetLength(0));
             Queue queueWayToPointA = new Queue(board.GetLength(0) * board.GetLength(0));
             List<int[]> wayCoordinates = new List<int[]>();
 
+            // Encontra o ponto inicial em todo o tabuleiro
             int[] initialPoint = FindInitialPoint(board);
             queuePoints.Enqueue(initialPoint);
 
             PrintBoard(board, wayCoordinates);
 
+            // Vetor de vetores que armazenam as direções conforme testa os vizinhos
             int[][] positionsCoordinates = new int[][] {
                 new int[] { 0 ,-1 },
                 new int[] { 1 , 0 },
@@ -41,16 +42,19 @@ namespace PathFinding
                 new int[] { -1, 0 }
             };
 
+            // Encontra o ponto final utilizando o algoritmo de Lee
             int[] finalPoint = FindFinalPoint(queuePoints, positionsCoordinates, board);
             queueWayToPointA.Enqueue(finalPoint);
 
+            // Exibe o caminho para chegar até o valor de B
             Console.WriteLine(finalPoint[0] != -1
-                                ? WayToFinalPoint(queueWayToPointA, positionsCoordinates, board, wayCoordinates)
+                                ? "Siga o seguinte caminho para ir de A até B: \n\n" + WayToFinalPoint(queueWayToPointA, positionsCoordinates, board, wayCoordinates)
                                 : "Não há caminhos do ponto A ao ponto B");
 
             PrintBoard(board, wayCoordinates);
         }
 
+        // Responsável por ler o arquivo txt e armazená-lo numa matriz, que em seguida é retornada.   
         private static int[][] ReadBoardArchive()
         {
             string[] linesReaded = System.IO.File.ReadAllLines(@"Board.txt");
@@ -65,6 +69,7 @@ namespace PathFinding
             return boardArchive;
         }
 
+        // Função que roda toda a matriz e retorna o ponto inicial.
         private static int[] FindInitialPoint(int[][] board)
         {
             for (int i = 0; i < board.GetLength(0); i++)
@@ -80,6 +85,8 @@ namespace PathFinding
             throw new Exception("Não há ponto inicial.");
         }
 
+        // Função que procura pelo ponto de B, verificando os vizinhos e incrementando os seus respectivos
+        // valores, num efeito de onde do algoritmo de Lee, até encontrar o ponto B, retornando o ponto final.
         private static int[] FindFinalPoint(Queue queuePoints, int[][] positionsCoordinates, int[][] board)
         {
             if (!queuePoints.IsEmpty())
@@ -115,6 +122,8 @@ namespace PathFinding
             return new int[] { -1, -1 };
         }
 
+        // Função que realiza o cmainho de retorno de B para A, procurando pelo menor número próximo do ponto indicado, armazenando
+        // essas coordenadas na variável wayCoorinates para futuramente serem exibidas.
         private static string WayToFinalPoint(Queue queueWay, int[][] positionsCoordinates, int[][] board, List<int[]> wayCoordinates)
         {
             string wayToPointA = "";
@@ -187,10 +196,13 @@ namespace PathFinding
 
             }
 
-            return revertedWayToPointA.Remove(0,3);
+            return revertedWayToPointA.Remove(0, 3);
         }
 
-        private static void PrintBoard(int[][] board, List<int[]> wayCoordinates) {
+        // Função que exibe utilizando um sistema de cores a matriz na tela do usuário, retorna o caminho na cor amarela
+        // caso já tenha encontrado o mesmo.
+        private static void PrintBoard(int[][] board, List<int[]> wayCoordinates)
+        {
 
             for (int i = 0; i < board.GetLength(0); i++)
             {
@@ -222,7 +234,8 @@ namespace PathFinding
 
                     for (int k = 0; k < wayCoordinates.Count - 1; k++)
                     {
-                        if (wayCoordinates[k][0] == i && wayCoordinates[k][1] == j) {
+                        if (wayCoordinates[k][0] == i && wayCoordinates[k][1] == j)
+                        {
                             Console.ForegroundColor = ConsoleColor.Yellow;
                             break;
                         }
